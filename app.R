@@ -9,12 +9,26 @@
 # App inspired by http://core-genomics.blogspot.com/2016/05/how-many-reads-to-sequence-genome.html
 
 library(shiny)
+library(dplyr)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
    # Application title
-   titlePanel("Lander-Waterman Coverage / Read Count Calculator"),
+   titlePanel("Coverage / Read Count Calculator"),
+
+   h4("Calculate how much sequencing you need to hit a target depth of coverage (or vice versa)."),
+
+   HTML("<p>Written by <a href='http://stephenturner.us', target='blank'>Stephen Turner</a>, based on the <a href='http://www.ncbi.nlm.nih.gov/pubmed/3294162' target='_blank'>Lander-Waterman formula</a>, inspired by <a href='http://core-genomics.blogspot.com/2016/05/how-many-reads-to-sequence-genome.html' target='_blank'>a similar calculator</a> written by James Hadfield. Coverage is calculated as <em>C=LN/G</em> and reads as <em>N=CG/L</em> where <em>C</em> = Coverage (X), <em>L</em> = Read length (bp), <em>G</em> = Haploid genome size (bp), and <em>N</em> = Number of reads.</p>"),
+
+   # HTML("<p>Written by <a href='http://stephenturner.us', target='blank'>Stephen Turner</a>, based on the <a href='http://www.ncbi.nlm.nih.gov/pubmed/3294162' target='_blank'>Lander-Waterman formula</a>, inspired by <a href='http://core-genomics.blogspot.com/2016/05/how-many-reads-to-sequence-genome.html' target='_blank'>a similar calculator</a> written by James Hadfield.</p><p>Coverage is calculated as <em>C=LN/G</em> and reads as <em>N=CG/L</em> where
+   #        <ul>
+   #          <li><em>C</em> = Coverage (X)</li>
+   #          <li><em>L</em> = Read length (bp)</li>
+   #          <li><em>G</em> = Haploid genome size (bp)</li>
+   #          <li><em>N</em> = Number of reads</li>
+   #        </ul>
+   #      </p>"),
 
    # Sidebar with a slider input for number of bins
    sidebarLayout(
@@ -25,7 +39,7 @@ ui <- fluidPage(
                      choices = list("Paired-end" = 2, "Single-end" = 1),
                      selected = 2),
 
-        numericInput("covg", label = h4("Genome size (bp)"), value = 3.2e9),
+        numericInput("genomesize", label = h4("Genome size (bp)"), value = 3.2e9),
         p("Haploid genome size. Can use scientific notation (e.g., \"3.2e9\" = 3,200,000,000). Examples:"),
         HTML("<ul>
              <li>Human genome: 3.2e9</li>
@@ -38,15 +52,24 @@ ui <- fluidPage(
 
       # Show a plot of the generated distribution
       mainPanel(
+
         wellPanel(
              radioButtons("whatcalc",
-                          label=h4("Calculate reads required or desired coverage?"),
-                          choices=list("Reads required"="reads", "Coverage obtained"="coverage"),
-                          selected="reads"),
-             hr(),
+                          label=h3("Calculate # reads or coverage?"),
+                          choices=list("# Reads (how many reads do I need to hit a target depth of coverage?)"="reads",
+                                       "Coverage (what's my coverage depth obtained from a set number of reads)"="coverage"),
+                          selected=NA),
+             # hr(),
              # Dynamic input goes here
              uiOutput("ui")
-        )
+        ),
+
+        h2(textOutput("text")),
+
+        tags$br(),
+
+        plotOutput("myplot")
+
       )
    )
 
@@ -58,13 +81,42 @@ server <- function(input, output) {
 
   output$ui <- renderUI({
     if (is.null(input$whatcalc)) {
-      return("reads")
+      return()
     } else {
       switch(input$whatcalc,
-             "reads"=sliderInput("dynamic", h4("Select X Coverage"), min=10, max=100, value=30),
-             "coverage"=sliderInput("dynamic", h4("Number reads sequenced (millions)"), min=10, max=100, value=30)
+             "reads"=sliderInput("dynamic", h4("Desired coverage"), min=10, max=150, value=30, step=5, post="x"),
+             "coverage"=sliderInput("dynamic",
+                                    label=h4("Number reads sequenced (millions)"),
+                                    min=1, max=1001, value=300,
+                                    post=paste0("M "))
       )
     }
+  })
+
+  # Converts genome size into SI-prefix character
+  bptosi <- function(bp) {
+    if (bp>1e9)      return(paste0(round(bp/1e9, 3), "GB"))
+    else if (bp>1e6) return(paste0(round(bp/1e6, 3), "MB"))
+    else if (bp>1e3) return(paste0(round(bp/1e3, 3), "KB"))
+    else             return(paste0(bp, "bp"))
+  }
+
+  outputtext <- reactive({
+    req(input$whatcalc)
+    if (input$whatcalc=="reads") {
+      paste0("Calculating reads", input$dynamic)
+    } else if (input$whatcalc=="coverage") {
+      paste0("Calculating coverage", input$dynamic)
+    }
+  })
+
+  output$text <- renderText({
+    outputtext()[[1]]
+  })
+
+  output$myplot <- renderPlot({
+    req(input$dynamic)
+    plot(input$dynamic)
   })
 
    # output$distPlot <- renderPlot({
