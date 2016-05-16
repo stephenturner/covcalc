@@ -38,23 +38,34 @@ ui <- fluidPage(
 
       # Show a plot of the generated distribution
       mainPanel(
-         fluidRow(
-           column(3, wellPanel(
-             radioButtons("whatcalc", label=NA, choices=list("Reads required"=1, "Coverage obtained"=2), selected=1),
-             radioButtons("test2", label=NA, choices=list("test"=1), selected=1)
-           )),
-           column(6, wellPanel(
-             # slider goes here
-           ))
-         )
+        wellPanel(
+             radioButtons("whatcalc",
+                          label=h4("Calculate reads required or desired coverage?"),
+                          choices=list("Reads required"="reads", "Coverage obtained"="coverage"),
+                          selected="reads"),
+             hr(),
+             # Dynamic input goes here
+             uiOutput("ui")
+        )
       )
-
    )
+
 )
 
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+
+  output$ui <- renderUI({
+    if (is.null(input$whatcalc)) {
+      return("reads")
+    } else {
+      switch(input$whatcalc,
+             "reads"=sliderInput("dynamic", h4("Select X Coverage"), min=10, max=100, value=30),
+             "coverage"=sliderInput("dynamic", h4("Number reads sequenced (millions)"), min=10, max=100, value=30)
+      )
+    }
+  })
 
    # output$distPlot <- renderPlot({
    #    # generate bins based on input$bins from ui.R
@@ -64,7 +75,6 @@ server <- function(input, output) {
    #    # draw the histogram with the specified number of bins
    #    hist(x, breaks = bins, col = 'darkgray', border = 'white')
    # })
-
 
 }
 
