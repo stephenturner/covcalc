@@ -19,6 +19,8 @@ ui <- fluidPage(
 
    h4("Calculate how much sequencing you need to hit a target depth of coverage (or vice versa)."),
 
+   HTML("<p><strong>Instructions:</strong> set the read length/configuration and genome size, then select whether you want to calculate the number of reads you need to sequence (for a desired coverage) or the coverage for a given number of reads sequenced.</p>"),
+
    HTML("<p>Written by <a href='http://stephenturner.us', target='blank'>Stephen Turner</a>, based on the <a href='http://www.ncbi.nlm.nih.gov/pubmed/3294162' target='_blank'>Lander-Waterman formula</a>, inspired by <a href='http://core-genomics.blogspot.com/2016/05/how-many-reads-to-sequence-genome.html' target='_blank'>a similar calculator</a> written by James Hadfield. Coverage is calculated as <em>C=LN/G</em> and reads as <em>N=CG/L</em> where <em>C</em> = Coverage (X), <em>L</em> = Read length (bp), <em>G</em> = Haploid genome size (bp), and <em>N</em> = Number of reads.</p>"),
 
    # HTML("<p>Written by <a href='http://stephenturner.us', target='blank'>Stephen Turner</a>, based on the <a href='http://www.ncbi.nlm.nih.gov/pubmed/3294162' target='_blank'>Lander-Waterman formula</a>, inspired by <a href='http://core-genomics.blogspot.com/2016/05/how-many-reads-to-sequence-genome.html' target='_blank'>a similar calculator</a> written by James Hadfield.</p><p>Coverage is calculated as <em>C=LN/G</em> and reads as <em>N=CG/L</em> where
@@ -64,11 +66,11 @@ ui <- fluidPage(
              uiOutput("ui")
         ),
 
-        h2(textOutput("text")),
+        h1(textOutput("text")),
 
-        tags$br(),
+        # plotOutput("myplot"),
 
-        plotOutput("myplot")
+        tags$br()
 
       )
    )
@@ -87,7 +89,7 @@ server <- function(input, output) {
              "reads"=sliderInput("dynamic", h4("Desired coverage"), min=10, max=150, value=30, step=5, post="x"),
              "coverage"=sliderInput("dynamic",
                                     label=h4("Number reads sequenced (millions)"),
-                                    min=1, max=1001, value=300,
+                                    min=1, max=1001, value=384,
                                     post=paste0("M "))
       )
     }
@@ -111,7 +113,16 @@ server <- function(input, output) {
   })
 
   output$text <- renderText({
-    outputtext()[[1]]
+    req(input$whatcalc)
+    if (input$whatcalc=="reads") {
+      # N=CG/L
+      reads <- (as.numeric(input$dynamic)*as.numeric(input$genomesize))/(as.numeric(input$readlength)*as.numeric(input$sepe))
+      paste0(signif(reads/1e6, 3), " million reads required for ", input$dynamic, "X coverage.")
+    } else if (input$whatcalc=="coverage") {
+      # C=LN/G
+      coverage <- (as.numeric(input$readlength)*as.numeric(input$sepe))*as.numeric(input$dynamic)*1e6/as.numeric(input$genomesize)
+      paste0(round(coverage), "X coverage obtained with ", input$dynamic, "M reads.")
+    }
   })
 
   output$myplot <- renderPlot({
