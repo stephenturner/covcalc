@@ -38,14 +38,15 @@ ui <- fluidPage(
 
       # Show a plot of the generated distribution
       mainPanel(
-         fluidRow(column(3, wellPanel(
-           radioButtons("whatcalc", label=NA, choices=list("Reads required"=1, "Coverage obtained"=2), selected=1),
-           radioButtons("test2", label=NA, choices=list("test"=1), selected=1)
-         ))),
-         fluidRow(column(3, wellPanel(
-           radioButtons("whatcalc", label=NA, choices=list("Reads required"=1, "Coverage obtained"=2), selected=1),
-           radioButtons("test2", label=NA, choices=list("test"=1), selected=1)
-         )))
+         fluidRow(
+           column(3, wellPanel(
+             radioButtons("whatcalc", label=NA, choices=list("Reads required"=1, "Coverage obtained"=2), selected=1),
+             radioButtons("test2", label=NA, choices=list("test"=1), selected=1)
+           )),
+           column(6, wellPanel(
+             # slider goes here
+           ))
+         )
       )
 
    )
