@@ -19,7 +19,7 @@ ui <- fluidPage(
 
    h4("Calculate how much sequencing you need to hit a target depth of coverage (or vice versa)."),
 
-   HTML("<p><strong>Instructions:</strong> set the read length/configuration and genome size, then select whether you want to calculate the number of reads you need to sequence (for a desired coverage) or the coverage for a given number of reads sequenced.</p>"),
+   HTML("<p><strong>Instructions:</strong> set the read length/configuration and genome size, then select what you want to calculate.</p>"),
 
    HTML("<p>Written by <a href='http://stephenturner.us', target='blank'>Stephen Turner</a>, based on the <a href='http://www.ncbi.nlm.nih.gov/pubmed/3294162' target='_blank'>Lander-Waterman formula</a>, inspired by <a href='http://core-genomics.blogspot.com/2016/05/how-many-reads-to-sequence-genome.html' target='_blank'>a similar calculator</a> written by James Hadfield. Coverage is calculated as <em>C=LN/G</em> and reads as <em>N=CG/L</em> where <em>C</em> = Coverage (X), <em>L</em> = Read length (bp), <em>G</em> = Haploid genome size (bp), and <em>N</em> = Number of reads.</p>"),
 
@@ -57,10 +57,10 @@ ui <- fluidPage(
 
         wellPanel(
              radioButtons("whatcalc",
-                          label=h3("Calculate # reads or coverage?"),
+                          label=h3("What do you want to know?"),
                           choices=list("# Reads (how many reads do I need to hit a target depth of coverage?)"="reads",
                                        "Coverage (what's my coverage depth obtained from a set number of reads)"="coverage"),
-                          selected=NA),
+                          selected="reads"),
              # hr(),
              # Dynamic input goes here
              uiOutput("ui")
@@ -117,11 +117,11 @@ server <- function(input, output) {
     if (input$whatcalc=="reads") {
       # N=CG/L
       reads <- (as.numeric(input$dynamic)*as.numeric(input$genomesize))/(as.numeric(input$readlength)*as.numeric(input$sepe))
-      paste0(signif(reads/1e6, 3), " million reads required for ", input$dynamic, "X coverage.")
+      paste0("*", signif(reads/1e6, 3), " million reads* required for ", input$dynamic, "X coverage of a ", bptosi(input$genomesize), " genome using ", input$sepe, "x", input$readlength, " sequencing reads.")
     } else if (input$whatcalc=="coverage") {
       # C=LN/G
       coverage <- (as.numeric(input$readlength)*as.numeric(input$sepe))*as.numeric(input$dynamic)*1e6/as.numeric(input$genomesize)
-      paste0(round(coverage), "X coverage obtained with ", input$dynamic, "M reads.")
+      paste0("*", round(coverage), "X coverage* for a ", bptosi(input$genomesize), " genome obtained with ", input$dynamic, "M ", input$sepe, "x", input$readlength, " sequencing reads.")
     }
   })
 
