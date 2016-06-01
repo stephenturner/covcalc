@@ -49,7 +49,7 @@ ui <- fluidPage(
                      choices=list(
                        "Human (3.1 Gb)" = 3096649726,
                        "Agilent V6 exome (60 Mb)" = 60e6,
-                       "S. cerevisiae (12.2 kb)" = 12157105,
+                       "S. cerevisiae (12.2 Mb)" = 12157105,
                        "E. coli K-12 (4.6 Mb)" = 	4641652,
                        "Other (Enter manually)"=""),
                      selected=3096649726),
